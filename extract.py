@@ -1,35 +1,41 @@
-#!/usr/bin/env python
+#!/usr/bin/python
+
+import cv2
+import numpy as np
+
+numcards = 9
+ids = np.zeros(4 * numcards)
 
 
-import keras
-import os
+im = cv2.imread('set.jpg')
+gray = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
+blur = cv2.GaussianBlur(gray, (1, 1), 1000)
+flag, thresh = cv2.threshold(blur, 120, 255, cv2.THRESH_BINARY)
 
-from keras.preprocessing.image import ImageDataGenerator, array_to_img, img_to_array, load_img
+imc, contours, hierarchy = cv2.findContours(thresh.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+contours = sorted(contours, key=cv2.contourArea, reverse=True)[:numcards]
 
-datagen = ImageDataGenerator(
-                             rotation_range=40,
-                             width_shift_range=0.2,
-                             height_shift_range=0.2,
-                             shear_range=0.2,
-                             zoom_range=0.2,
-                             horizontal_flip=True,
-                             fill_mode='nearest')
+for i in range(numcards):
+    card = contours[i]
 
-dirList = os.listdir("train/")
-for tdir in dirList:
-    fname = tdir
-    if "." not in tdir:
-        imgpath = 'train/'+tdir+'/'+tdir+'.jpg'
-        print imgpath
-        img = load_img(imgpath)  # this is a PIL image
-        x = img_to_array(img)  # this is a Numpy array with shape (3, 150, 150)
-        x = x.reshape((1,) + x.shape)  # this is a Numpy array with shape (1, 3, 150, 150)
+    # imc2, c2, h2, = cv2.findContours(card, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    # c2 = sorted(contours, key=cv2.contourArea, reverse=True)[:numcards]
+    # for j in c2:
+        
+    peri = cv2.arcLength(card, True)
+    approx = np.array([cv2.approxPolyDP(card, 0.02 * peri, True)], np.float32)
+    approx = approx.reshape(4, 2)
+    rect = cv2.minAreaRect(contours[2])
+    r = cv2.boxPoints(rect)
+    h = np.array([[0, 0], [399, 0], [399, 599], [0, 599]], np.float32)
+    transform = cv2.getPerspectiveTransform(approx, h)
+    warp = cv2.warpPerspective(im, transform, (400, 600))
+    cv2.namedWindow(str(i+1), cv2.WINDOW_NORMAL)
+    cv2.imshow(str(i+1), warp)
 
-        # the .flow() command below generates batches of randomly transformed images
-        # and saves the results to the `preview/` directory
-        i = 0
-        for batch in datagen.flow(x, batch_size=1,
-                                  save_to_dir='train/'+tdir, save_prefix='GDE1', save_format='jpeg'):
-            i += 1
-            if i > 10:
-                break  # otherwise the generator would loop indefinitely
+cv2.waitKey(0)
+
+
+# cv2.namedWindow('test', cv2.WINDOW_NORMAL)
+# cv2.imshow('test', im2)
+# cv2.waitKey(0)
