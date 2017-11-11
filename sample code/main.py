@@ -2,6 +2,7 @@ import numpy as np
 from extract import extract
 from color import color
 from number import number
+import number_old
 
 COL = 0       # R=0, G=1, P=2
 NUM = 1       # 1=1, 2=2, 3=3
@@ -16,5 +17,6 @@ card = extract('set.jpg', NCARDS)
 for i in range(NCARDS):
     res[i, COL] = color(card[i])
     res[i, NUM] = number(card[i])
+    res[i, SHADE] = number_old.number(card[i])
 
 print(res)
