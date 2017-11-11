@@ -33,5 +33,7 @@ def extract(image, n):
             [0, 399]], dtype="float32")
         M = cv2.getPerspectiveTransform(rect, dst)
         warp = cv2.warpPerspective(im, M, (400, 400))
+        # cv2.namedWindow(str(i), flags=cv2.WINDOW_NORMAL)
+        # cv2.imshow(str(i), warp)
         card.append(warp)
     return card
